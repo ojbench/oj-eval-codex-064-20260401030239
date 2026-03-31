@@ -40,22 +40,11 @@ int main() {
     string fmt;
     if (!std::getline(cin, fmt)) return 0;
 
-    long long n_args = 0;
-    {
-        string line;
-        if (!std::getline(cin, line)) line = "0";
-        std::stringstream ss(line);
-        ss >> n_args;
-        if (!ss) n_args = 0;
-    }
-
+    // Read the rest of stdin as whitespace-separated argument tokens.
     vector<string> args;
-    args.reserve(max(0LL, n_args));
-    for (long long i = 0; i < n_args; ) {
+    {
         string tok;
-        if (!(cin >> tok)) break;
-        args.push_back(tok);
-        ++i;
+        while (cin >> tok) args.push_back(tok);
     }
 
     // Process format string
@@ -148,4 +137,3 @@ int main() {
     if (!out.str().empty() && out.str().back() != '\n') cout << '\n';
     return 0;
 }
-
