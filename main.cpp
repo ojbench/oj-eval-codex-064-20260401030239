@@ -111,8 +111,8 @@ int main() {
             } else if (v.size() >= 2 && v.front() == '"' && v.back() == '"') {
                 // Quoted string, strip quotes
                 out << v.substr(1, v.size() - 2);
-            } else if (!v.empty() && v[0] == '-') {
-                // Signed default -> %d
+            } else if (is_signed_number(v)) {
+                // Signed default -> %d (handles leading + or -)
                 long long x = 0;
                 try { x = stoll(v); } catch (...) { x = 0; }
                 out << x;
