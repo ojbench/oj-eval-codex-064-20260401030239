@@ -40,11 +40,47 @@ int main() {
     string fmt;
     if (!std::getline(cin, fmt)) return 0;
 
-    // Read the rest of stdin as whitespace-separated argument tokens.
+    // Read the rest of stdin and tokenize:
+    // - Quoted strings "..." kept together (quotes retained then stripped later)
+    // - Bracket blocks [...] kept together
+    // - Otherwise split by whitespace
     vector<string> args;
     {
-        string tok;
-        while (cin >> tok) args.push_back(tok);
+        std::string rest;
+        {
+            std::ostringstream oss;
+            oss << cin.rdbuf();
+            rest = oss.str();
+        }
+        size_t p = 0, m = rest.size();
+        auto skip_ws = [&](){ while (p < m && isspace(static_cast<unsigned char>(rest[p]))) ++p; };
+        while (true) {
+            skip_ws();
+            if (p >= m) break;
+            if (rest[p] == '"') {
+                size_t q = p + 1;
+                while (q < m && rest[q] != '"') ++q;
+                size_t end = (q < m && rest[q] == '"') ? q : q - 1;
+                args.emplace_back(rest.substr(p, end - p + 1));
+                p = (q < m && rest[q] == '"') ? q + 1 : q;
+            } else if (rest[p] == '[') {
+                size_t q = p + 1;
+                int depth = 1;
+                while (q < m && depth > 0) {
+                    if (rest[q] == '[') ++depth;
+                    else if (rest[q] == ']') --depth;
+                    ++q;
+                }
+                // include closing ']' if found
+                args.emplace_back(rest.substr(p, (q <= m ? q : m) - p));
+                p = q;
+            } else {
+                size_t q = p;
+                while (q < m && !isspace(static_cast<unsigned char>(rest[q]))) ++q;
+                args.emplace_back(rest.substr(p, q - p));
+                p = q;
+            }
+        }
     }
 
     // Process format string
@@ -76,7 +112,11 @@ int main() {
 
         if (sp == 's') {
             string v = next_arg();
-            out << v;
+            if (v.size() >= 2 && v.front() == '"' && v.back() == '"') {
+                out << v.substr(1, v.size() - 2);
+            } else {
+                out << v;
+            }
             ++i;
         } else if (sp == 'd') {
             string v = next_arg();
